@@ -49,11 +49,11 @@ dataset.
 
 The step data provided for this project was already in a tidy dataset.  The only pre-processing involved unzipping the file and changing the date variable to a Date type.
 
-```{r}
+
+```r
 unzip("activity.zip")
 activity <- read.csv("activity.csv")
 activity$date <- as.Date(activity$date)
-
 ```
 
 
@@ -63,44 +63,54 @@ activity$date <- as.Date(activity$date)
 
 After removing all intervals with missing data for steps, the data was aggregated to find a total number of steps for each day of the study.
 
-```{r}
+
+```r
 steps_no_na <- activity[!is.na(activity$steps),]
 steps_by_date <- aggregate(list(steps = steps_no_na$steps), list(date = steps_no_na$date), sum)
 hist(steps_by_date$steps, breaks = 30,
       main = "Figure 1: Histogram of Total Daily Steps: Oct-Nov, 2012",
       xlab = "Total Daily Steps")
-mean_by_date <- round(mean(steps_by_date$steps),2)
-median_by_date <- median(steps_by_date$steps)
-
-
-
 ```
 
-Looking at a histogram of the daily steps, the variable seems to be fairly normally distributed with a mean of `r mean_by_date` and a median of `r median_by_date`.
+![plot of chunk unnamed-chunk-2](figure/unnamed-chunk-2-1.png) 
+
+```r
+mean_by_date <- round(mean(steps_by_date$steps),2)
+median_by_date <- median(steps_by_date$steps)
+```
+
+Looking at a histogram of the daily steps, the variable seems to be fairly normally distributed with a mean of 10766.19 and a median of 10765.
 
 
 ## What is the average daily activity pattern?
 
 To look at the average daily activity pattern, the data was aggregated across intervals to get the average number of steps the volunteer took during an given interval across all days of the study.
 
-```{r}
+
+```r
 steps_by_interval <- aggregate(list(steps = steps_no_na$steps), list(interval = steps_no_na$interval), mean)
 plot(steps_by_interval$interval,steps_by_interval$steps, type ="l",
       main = "Figure 2: Average Number of Steps for Each Time Interval",
       xlab = "Time Interval",
       ylab = "Average Number of Steps")
+```
+
+![plot of chunk unnamed-chunk-3](figure/unnamed-chunk-3-1.png) 
+
+```r
 max_steps <- round(max(steps_by_interval$steps),2)
 max_interval <- steps_by_interval[which.max(steps_by_interval$steps),1]
 max_interval_hour <- round(max_interval/100,0)
 max_interval_minute <- round(max_interval%%100,0)
 ```
 
-The maximum average number of steps, `r max_steps`, occurred during interval number `r max_interval` which begins at `r max_interval_hour`:`r max_interval_minute`.
+The maximum average number of steps, 206.17, occurred during interval number 835 which begins at 8:35.
 
 ## Imputing missing values
 
 In the above analyses, the intervals with missing data were removed.  For this analysis, instead of being removed, missing values for steps were imputed to be the average number of steps for that interval over the two months (already calculated for Figure 2 above.)
-```{r}
+
+```r
 total_missing <- sum(is.na(activity$steps))
 imp_steps <- activity
 for (i in 1:nrow(imp_steps)) {
@@ -115,16 +125,22 @@ hist(imp_steps_by_date$steps, breaks = 30,
       main = "Figure 3: Histogram of Total Daily Steps: Oct-Nov, 2012",
       sub = "(missing data replaced with average for interval)",
       xlab = "Total Daily Steps")
+```
+
+![plot of chunk unnamed-chunk-4](figure/unnamed-chunk-4-1.png) 
+
+```r
 imp_mean_by_date <- round(mean(imp_steps_by_date$steps),2)
 imp_median_by_date <- round(median(imp_steps_by_date$steps),2)
 ```
 
-A total of `r total_missing` intervals had missing data and were replaced with averages.  In this new dataset, the mean is `r imp_mean_by_date` and the median is `r imp_median_by_date`.  The mean does not change at all, which is not surprising given the missing intervals were replaced with means, and the median changes very little.  
+A total of 2304 intervals had missing data and were replaced with averages.  In this new dataset, the mean is 10766.19 and the median is 10766.19.  The mean does not change at all, which is not surprising given the missing intervals were replaced with means, and the median changes very little.  
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
 To discover if there is a difference in actvity between weekdays and weekends, I created a new variable by finding the day of the week from the date and then a factor variable that designated that day as "weekend" or "weekday."  Then the data was aggregated by type of day and interval to get an average for each interval separately for weekdays and weekends.
-```{r}
+
+```r
 imp_steps$day <- weekdays(imp_steps$date)
 imp_steps$weekday <- as.factor(with(imp_steps, ifelse(day == "Saturday" | day == "Sunday", "weekend","weekday")))
 steps_by_weekday <- aggregate(list(steps = imp_steps$steps), list(interval = imp_steps$interval, weekday = imp_steps$weekday), mean)
@@ -133,6 +149,8 @@ xyplot(steps ~ interval | weekday, data= steps_by_weekday, type = "l", layout = 
        main = "Figure 4: Difference in Activity Level on Weekends and Weekdays",
        xlab = "Interval", ylab = "Number of Steps")
 ```
+
+![plot of chunk unnamed-chunk-5](figure/unnamed-chunk-5-1.png) 
 
 The plot suggests that the volunteer is active earlier in the day on weekdays and seems to sleep later on weekend mornings.  The volunteer also seems to be active later in the evening on weekends.  The volunteer is active more throughout the day on weekends, but on both weekends and weekdays there is a broad peak in the mid-morning.
 
